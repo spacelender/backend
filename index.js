@@ -4,6 +4,7 @@ var cors = require('cors')
 var cookieParser = require('cookie-parser')
 var session = require('express-session');
 var MongoDBStore = require('connect-mongodb-session')(session);
+var uniqid = require('uniqid');
 const port = 5000;
 
 
@@ -13,7 +14,7 @@ const dbOptions ={
   useNewUrlParser: true,useUnifiedTopology: true 
 }
 mongoose.connect(uri,dbOptions).then(() => {  
-console.log(mongoose.connection.readyState);
+console.log("Mongoose Connection State : " + mongoose.connection.readyState )
 	})
 
   const app = express()
@@ -106,6 +107,7 @@ app.get("/api/getUserDetailsByUUID/:userId", (req, res) => {
 });
 
 
+
 app.post("/api/login/", (req, res) => {
 let email = req.body.email
 let pass  = req.body.pass
@@ -116,49 +118,111 @@ let pass  = req.body.pass
         
       }
       else {
-
-        if(user.password===pass)
+        if(user.length==0)
+        {
+          res.send("User does not exist, Please Sign-Up")
+        }
+        else if(user.password===pass)
         { 
           req.session.alreadyLoggedIn = true;
           req.session.email = email;
           console.log("save to redis as current authenticated user ?")
           console.log("User successfully logged in,tracking turned on in Cookie")
-          res.send("password match");
+          res.send("Password match");
         }
         else{
-          res.send("wrong password");
+          res.send("Wrong password, Retry Log in");
         }
         
       }
     });
 });
 
+app.post("/api/signup/", (req, res) => {
+   
+  User.findOne({"email":req.body.email}, function(err,user){
+       
+    if(err){
+      console.log(err);
+      
+    }
+    else {
+      if(user.length==0)
+      {
+
+        req.session.alreadyLoggedIn = true;
+        req.session.email = req.body.email;
+        var user = new User({
+          email    : req.body.email,
+          password : req.body.pass,
+          userId   : uniqid(),
+          bookings : req.body.bookings,
+          userName : (req.body.userName) ?  req.body.userName : null
+        })
+
+        User.insertOne(myobj, function(err, res) {
+          if (err) throw err;
+          console.log("New User created");
+          res.send("Signup Complete")
+        });
+
+      }
+     else{
+
+      res.send("User already exists with same email")
+     }
+
+    }
+
+
+  }); 
+  });
+
+
+//This is a modular query which will query based on what filters you send in, if you don't send the filter it assumes the field exists which by default the field exists on all.
+//It will only apply searches on the conditions which you send in.
+//
 app.post("/api/getSpacesByCustomCriteria/", (req, res) => {
          
+      
         // req.body.eventType
         // req.body.location
         // req.body.budgetMin
         // req.body.budgetMax
         // req.body.capacityMin
+        // req.body.capacityMax
         // req.body.eventTypes
         // req.body.features
         // req.body.amenities
         // req.body.extras
+
         var eventArr     = req.body.eventTypes
         var featureArr   = req.body.features
         var amenitiesArr = req.body.amenities
         var extrasArr    = req.body.extras
 
-        // {"eventTypes":["BirthDay","Reunion"],"location":"Bangalore","budgetMin":25000,"budgetMax":35000,"capacityMin":350} add the last 3 arrays here to mock in POSTMAN
+        // {"eventTypes":["BirthDay","Reunion"],"location":"Bangalore","budgetMin":25000,"budgetMax":35000,"capacityMin":350, "features": ["Kitchen"], "amenities": ["Wifi"], "extras": ["Full Kitchen"]} mock in POSTMAN
+        // the last 
            
-  Space.find({"tags":{"$in":eventArr},"city":req.body.location,"pricing":{$gte:req.body.budgetMin,$lte:req.body.budgetMax},"capacity":{$gte:req.body.capacityMin},
-  "features":{"$all":featureArr},"amenities":{"$all":amenitiesArr},"extras":{"$all":extrasArr}}, function(err,space){
+       Space.find({
+        "tags":(req.body.eventType) ? {"$in":eventArr}: {$exists :true},
+        "city":(req.body.city) ? req.body.location : {$exists :true},
+        "pricing": (req.body.budgetMin&req.body.budgetMax) ? {$gte:req.body.budgetMin,$lte:req.body.budgetMax} : {$exists :true},
+        "capacity":(req.body.capacityMin&req.body.capacityMax) ? {$gte:req.body.capacityMin,$lte:req.body.capacityMax} : {$exists :true},
+        "features":(req.body.features) ? {"$all":featureArr} : {$exists :true},
+        "amenities":(req.body.amenities) ? {"$all":amenitiesArr} : {$exists :true},
+        "extras":(req.body.extras) ? {"$all":extrasArr} : {$exists :true}}, function(err,space){
       if(err){
         console.log(err);
       }
       else {
         console.log(space);
-        res.send(space);
+        if(space.length > 0)
+             res.send(space);
+        else
+             res.send("No spaces found for given filter")
+        console.log("Results found :")
+        console.log(space.length)          
       }
     });
 });
