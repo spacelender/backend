@@ -139,7 +139,8 @@ let pass  = req.body.pass
 });
 
 app.post("/api/signup/", (req, res) => {
-   
+    
+  console.log(req.body)
   User.findOne({"email":req.body.email}, function(err,user){
        
     if(err){
@@ -147,29 +148,31 @@ app.post("/api/signup/", (req, res) => {
       
     }
     else {
-      if(user.length==0)
+      if(user==null)
       {
 
-        req.session.alreadyLoggedIn = true;
-        req.session.email = req.body.email;
+        
         var user = new User({
           email    : req.body.email,
           password : req.body.pass,
           userId   : uniqid(),
-          bookings : req.body.bookings,
           userName : (req.body.userName) ?  req.body.userName : null
         })
 
-        User.insertOne(myobj, function(err, res) {
+        User.create(user, function(err, user) {
           if (err) throw err;
           console.log("New User created");
-          res.send("Signup Complete")
+          console.log(user)
+          res.send("Signup Complete");
         });
+
+        req.session.alreadyLoggedIn = true;
+        req.session.email = req.body.email;
 
       }
      else{
 
-      res.send("User already exists with same email")
+      res.send("User already exists with same email");
      }
 
     }
@@ -184,14 +187,13 @@ app.post("/api/signup/", (req, res) => {
 //
 app.post("/api/getSpacesByCustomCriteria/", (req, res) => {
          
-      
-        // req.body.eventType
+        // req.body.listingId
+        // req.body.eventTypes
         // req.body.location
         // req.body.budgetMin
         // req.body.budgetMax
         // req.body.capacityMin
         // req.body.capacityMax
-        // req.body.eventTypes
         // req.body.features
         // req.body.amenities
         // req.body.extras
@@ -205,8 +207,9 @@ app.post("/api/getSpacesByCustomCriteria/", (req, res) => {
         // the last 
            
        Space.find({
-        "tags":(req.body.eventType) ? {"$in":eventArr}: {$exists :true},
-        "city":(req.body.city) ? req.body.location : {$exists :true},
+        "listingId":(req.body.listingId) ? req.body.listingId : {$exists :true},
+        "tags":(req.body.eventTypes) ? {"$in":eventArr}: {$exists :true},
+        "city":(req.body.location) ? req.body.location : {$exists :true},
         "pricing": (req.body.budgetMin&req.body.budgetMax) ? {$gte:req.body.budgetMin,$lte:req.body.budgetMax} : {$exists :true},
         "capacity":(req.body.capacityMin&req.body.capacityMax) ? {$gte:req.body.capacityMin,$lte:req.body.capacityMax} : {$exists :true},
         "features":(req.body.features) ? {"$all":featureArr} : {$exists :true},
@@ -216,7 +219,7 @@ app.post("/api/getSpacesByCustomCriteria/", (req, res) => {
         console.log(err);
       }
       else {
-        console.log(space);
+
         if(space.length > 0)
              res.send(space);
         else

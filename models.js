@@ -11,6 +11,7 @@ const UserSchema = new Schema ({
         status:Number,
         date:Date
         }],
+    contactNum:String    
    });
 
    const SpaceSchema = new Schema ({
