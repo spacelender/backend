@@ -81,7 +81,7 @@ app.get("/api/logout", (req, res) => {
 });
 
 
-app.get("/getUserDetailsByMail/:email", (req, res) => {
+app.get("/api/getUserDetailsByMail/:email", (req, res) => {
   User.findOne({"email":req.params.email}, function(err,user){
       if(err){
         console.log(err);
@@ -93,7 +93,7 @@ app.get("/getUserDetailsByMail/:email", (req, res) => {
     });
 });
 
-app.get("/getUserDetailsByUUID/:userId", (req, res) => {
+app.get("/api/getUserDetailsByUUID/:userId", (req, res) => {
   User.findOne({"userId":req.params.userId}, function(err,user){
       if(err){
         console.log(err);
@@ -105,12 +105,11 @@ app.get("/getUserDetailsByUUID/:userId", (req, res) => {
     });
 });
 
-//need to use post here
-app.get("/login/", (req, res) => {
-    // let email = req.body.email
-    // let pass  = req.body.pass
-let email = req.query.email
- let pass  = req.query.pass
+
+app.post("/api/login/", (req, res) => {
+let email = req.body.email
+let pass  = req.body.pass
+
   User.findOne({"email":email}, function(err,user){
       if(err){
         console.log(err);
@@ -134,7 +133,7 @@ let email = req.query.email
     });
 });
 
-app.post("/getSpacesByCustomCriteria/", (req, res) => {
+app.post("/api/getSpacesByCustomCriteria/", (req, res) => {
          
         // req.body.eventType
         // req.body.location
