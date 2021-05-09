@@ -31,12 +31,13 @@ const UserSchema = new Schema ({
         desc:String,
         rental:Number,
         }],
-    images:[],
+    images:[String],
     tags:[String],
     currentBookings:[{
     }],
     availability:[{
-    }]
+    }],
+    type:String
    });
 
 const user =mongoose.model('user', UserSchema, 'users');

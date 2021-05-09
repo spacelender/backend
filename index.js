@@ -210,6 +210,7 @@ app.post("/api/getSpacesByCustomCriteria/", (req, res) => {
         "listingId":(req.body.listingId) ? req.body.listingId : {$exists :true},
         "tags":(req.body.eventTypes) ? {"$in":eventArr}: {$exists :true},
         "city":(req.body.location) ? req.body.location : {$exists :true},
+        "type":(req.body.type)? req.body.type : {$exists :true},
         "pricing": (req.body.budgetMin&req.body.budgetMax) ? {$gte:req.body.budgetMin,$lte:req.body.budgetMax} : {$exists :true},
         "capacity":(req.body.capacityMin&req.body.capacityMax) ? {$gte:req.body.capacityMin,$lte:req.body.capacityMax} : {$exists :true},
         "features":(req.body.features) ? {"$all":featureArr} : {$exists :true},
